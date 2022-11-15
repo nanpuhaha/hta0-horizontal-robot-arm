@@ -44,7 +44,7 @@ class image_recognition:
     
     def detectObjects(self, image, bg_img,externalContours=True):
 
-        img=image.copy()           
+        img=image.copy()
         background_img=bg_img.copy()
 
 
@@ -64,7 +64,7 @@ class image_recognition:
         # /////// identify the VALID Contours
         contours_validindex= self.identify_validcontours(contours_detected,height,width)
         obj_count=len(contours_validindex)
-        self.printStatus("valid contours "+ str(obj_count))
+        self.printStatus(f"valid contours {obj_count}")
 
         return obj_count, contours_detected, contours_validindex
 
@@ -75,20 +75,20 @@ class image_recognition:
         detected_points=[]
 
         if (len(validcontours)>0):
-            for i in range(0,len(validcontours)):
+            for i in range(len(validcontours)):
                 cnt=diff_contours[validcontours[i]]
 
                 #get rectangle detected_points
                 x,y,w,h=cv2.boundingRect(cnt)
-                
+
                 #get centroid
                 M=cv2.moments(cnt)
                 cx=int(M['m10']/M['m00'])
                 cy=int(M['m01']/M['m00'])
-                
-                self.printStatus("point number "+str(i))
-                self.printStatus(str(cx)+", "+str(y))
-                self.printStatus("x: "+str(x)+" y: "+str(y)+" w: "+str(w)+" h: "+str(h))
+
+                self.printStatus(f"point number {str(i)}")
+                self.printStatus(f"{cx}, {str(y)}")
+                self.printStatus(f"x: {str(x)} y: {str(y)} w: {str(w)} h: {str(h)}")
 
                 #draw retangle
                 cv2.rectangle(img_output,(x,y),(x+w,y+h),(0,255,0),2)
@@ -98,8 +98,26 @@ class image_recognition:
                 if self.PRINT_IMG_LABELS ==True:
                     
                     #image,text,font,bottomleftconrner,fontscale,fontcolor,linetype
-                    cv2.putText(img_output,"Point "+str(i),(x-w,y+h),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,0),1)
-                    cv2.putText(img_output,"cx,cy: "+str(self.truncate(cx,2))+","+str(self.truncate(cy,2)),(x-w,y+h+9),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,0),1)
+                    cv2.putText(
+                        img_output,
+                        f"Point {str(i)}",
+                        (x - w, y + h),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 0, 0),
+                        1,
+                    )
+
+                    cv2.putText(
+                        img_output,
+                        f"cx,cy: {str(self.truncate(cx, 2))},{str(self.truncate(cy, 2))}",
+                        (x - w, y + h + 9),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 0, 0),
+                        1,
+                    )
+
 
                 points=[x,y,w,h,cx,cy]
                 detected_points.append(points)
@@ -129,9 +147,7 @@ class image_recognition:
                 
     def readImage(self,imgfile):
 
-        img=cv2.imread(imgfile)
-
-        return img
+        return cv2.imread(imgfile)
 
 
                 
@@ -150,14 +166,13 @@ class image_recognition:
             cv2.imshow(text,img)
             if self.PREVIEW_AUTOCLOSE==True:
                 cv2.waitKey(2000)
-                cv2.destroyAllWindows()
-    
             else:
                 cv2.waitKey(0)
-                cv2.destroyAllWindows()
+
+            cv2.destroyAllWindows()
 
     def calculateDifference_method1(self,img,background_img):
-        
+
         # Object Recognition Tresholds
         diff_low_t=45
         diff_high_t=255
@@ -173,7 +188,7 @@ class image_recognition:
         # Image - Gray
         img_gray=cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         self.previewImage("2 Image Gray",img_gray)
-         
+
         # Calculate Difference
         diff_gray=cv2.absdiff(background_img_gray,img_gray)
         self.previewImage("3 Pre-Diff",diff_gray)
@@ -189,12 +204,12 @@ class image_recognition:
         #Treshold Blur
         diff = cv2.GaussianBlur(diff_tresh,(5,5),0)
         self.previewImage("6 Image Treshold",diff)
-        
+
 
         return diff
 
     def calculateDifference_method2(self,img,background_img):
-        
+
         # Object Recognition Tresholds
         bg_low_t=0
         bg_high_t=255
@@ -225,7 +240,7 @@ class image_recognition:
         # Image - Blur
         img_blur = cv2.GaussianBlur(img_gray,(5,5),0)
         self.previewImage("5 Image Blur Gray",img_blur,testingPreviews)
-        
+
         # Image - Treshold
         #========= Threshold :: this is a manual calibratin point in this approach
         ret,img_tresh = cv2.threshold(img_blur,img_low_t,img_high_t,cv2.THRESH_BINARY_INV)
@@ -314,16 +329,16 @@ class image_recognition:
                 edge_noise=True
             if (y+h)==height:
                 edge_noise=True
-                       
-            # DISCARD noise with measure if area not within parameters
-            if ca>self.MIN_AREA and ca<self.MAX_AREA:
 
-                # DISCARD as noise on ratio
-                if aspect_ratio>=self.MIN_ASPECTRATIO and aspect_ratio<=self.MAX_ASPECTRATIO:
-  
-                    # DISCARD if at the Edge
-                    if edge_noise==False:
-                         contours_validindex.append(contour_index)
+            # DISCARD noise with measure if area not within parameters
+            if (
+                ca > self.MIN_AREA
+                and ca < self.MAX_AREA
+                and aspect_ratio >= self.MIN_ASPECTRATIO
+                and aspect_ratio <= self.MAX_ASPECTRATIO
+                and not edge_noise
+            ):
+                contours_validindex.append(contour_index)
 
         return contours_validindex
 
@@ -338,17 +353,15 @@ class image_recognition:
         # EXPAND THE CONTOUR
         adjust=0.15
         y=int(y-((h*adjust)/2))
-        if y<0:
-            y=0
+        y = max(y, 0)
         x=int(x-((w*adjust)/2))
-        if x<0:
-            x=0
+        x = max(x, 0)
         w=int(w*(1+adjust))
         h=int(h*(1+adjust))
 
         # CHECK TO SEE IF EXPANDED CONTOUR IS IN BOUNDS
-        if y<0: y=0
-        if x<0: x=0
+        y = max(y, 0)
+        x = max(x, 0)
         if (x+w)>width: w=width-x
         if (y+h)>height: h=height-y        
 
@@ -356,13 +369,13 @@ class image_recognition:
         if w>h:
             #ensure contour is centered
             y=int(y-((w-h)/2))
-            if y<0: y=0
+            y = max(y, 0)
             #make a square
             h=w
             if (y+h)>height: y=height-h
         if h>w:
             x=int(x-((h-w)/2))
-            if x<0: x=0
+            x = max(x, 0)
             w=h
             if (x+w)>width: x=width-w
 
@@ -380,14 +393,14 @@ class image_recognition:
 
         #This rectangle will reflect the rotation of the image.
         rect = cv2.minAreaRect(cnt)
-        
+
         img=crop_img.copy()
 
         r_cx=rect[0][0] #center x
         r_cy=rect[0][1] #centery y
         r_width=rect[1][0]
         r_height=rect[1][1]
-    
+
         #EXPAND THE RECTANGLE ==> CHECK TO SEE IF NOT OUT OF BOUNDS
         adjust=0.15+0.05
         while True:
@@ -411,10 +424,10 @@ class image_recognition:
                 if nbox[i][0]>width:
                     fits_inbounds=False
                 #y greater than picture with
-                    
+
                 if nbox[i][1]>height:
                     fits_inbounds=False
-                    
+
             if fits_inbounds==True:
                 rect=new_rect
                 break
@@ -445,7 +458,7 @@ class image_recognition:
         img_rot = cv2.warpAffine(img, M, (cols, rows))
 
         # rotate bounding box
-        box = cv2.boxPoints(rect)      
+        box = cv2.boxPoints(rect)
         pts = np.int0(cv2.transform(np.array([box]), M))[0]
         pts[pts < 0] = 0
 
@@ -460,8 +473,8 @@ class image_recognition:
         h=yh-y
 
         # CHECK TO SEE IF EXPANDED CONTOUR IS IN BOUNDS
-        if y<0: y=0
-        if x<0: x=0
+        y = max(y, 0)
+        x = max(x, 0)
         if (xw)>width: w=width-x
         if (yh)>height: h=height-y        
 
@@ -477,7 +490,7 @@ class image_recognition:
         # Crop the Image
         crop_img = img_rot[x:x+w,
                            y:y+h]
-        
+
         return crop_img,contour_img,r_width,r_height
 
 

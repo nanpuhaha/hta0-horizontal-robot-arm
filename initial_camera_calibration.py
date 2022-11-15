@@ -46,7 +46,7 @@ for fname in images:
         cv2.waitKey(500)
 
     img1=img
-    
+
 cv2.destroyAllWindows()
 
 print(">==> Starting calibration")
@@ -55,11 +55,11 @@ ret, cam_mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gra
 #print(ret)
 print("Camera Matrix")
 print(cam_mtx)
-np.save(savedir+'cam_mtx.npy', cam_mtx)
+np.save(f'{savedir}cam_mtx.npy', cam_mtx)
 
 print("Distortion Coeff")
 print(dist)
-np.save(savedir+'dist.npy', dist)
+np.save(f'{savedir}dist.npy', dist)
 
 print("r vecs")
 print(rvecs[2])
@@ -82,12 +82,12 @@ newcam_mtx, roi=cv2.getOptimalNewCameraMatrix(cam_mtx, dist, (w,h), 1, (w,h))
 
 print("Region of Interest")
 print(roi)
-np.save(savedir+'roi.npy', roi)
+np.save(f'{savedir}roi.npy', roi)
 
 print("New Camera Matrix")
 #print(newcam_mtx)
-np.save(savedir+'newcam_mtx.npy', newcam_mtx)
-print(np.load(savedir+'newcam_mtx.npy'))
+np.save(f'{savedir}newcam_mtx.npy', newcam_mtx)
+print(np.load(f'{savedir}newcam_mtx.npy'))
 
 inverse = np.linalg.inv(newcam_mtx)
 print("Inverse New Camera Matrix")
@@ -102,8 +102,8 @@ undst = cv2.undistort(img1, cam_mtx, dist, None, newcam_mtx)
 #dst = dst[y:y+h, x:x+w]
 #cv2.circle(dst,(308,160),5,(0,255,0),2)
 cv2.imshow('img1', img1)
-cv2.waitKey(5000)      
+cv2.waitKey(5000)
 cv2.destroyAllWindows()
 cv2.imshow('img1', undst)
-cv2.waitKey(5000)      
+cv2.waitKey(5000)
 cv2.destroyAllWindows()

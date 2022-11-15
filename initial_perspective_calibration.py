@@ -17,17 +17,17 @@ writeValues=False
 
 #load camera calibration
 savedir="camera_data/"
-cam_mtx=np.load(savedir+'cam_mtx.npy')
-dist=np.load(savedir+'dist.npy')
-newcam_mtx=np.load(savedir+'newcam_mtx.npy')
-roi=np.load(savedir+'roi.npy')
+cam_mtx = np.load(f'{savedir}cam_mtx.npy')
+dist = np.load(f'{savedir}dist.npy')
+newcam_mtx = np.load(f'{savedir}newcam_mtx.npy')
+roi = np.load(f'{savedir}roi.npy')
 
 
 #load center points from New Camera matrix
 cx=newcam_mtx[0,2]
 cy=newcam_mtx[1,2]
 fx=newcam_mtx[0,0]
-print("cx: "+str(cx)+",cy "+str(cy)+",fx "+str(fx))
+print(f"cx: {str(cx)},cy {str(cy)},fx {str(fx)}")
 
 
 #MANUALLY INPUT YOUR MEASURED POINTS HERE
@@ -98,7 +98,8 @@ print(newcam_mtx)
 inverse_newcam_mtx = np.linalg.inv(newcam_mtx)
 print("Inverse New Camera Matrix")
 print(inverse_newcam_mtx)
-if writeValues==True: np.save(savedir+'inverse_newcam_mtx.npy', inverse_newcam_mtx)
+if writeValues:
+    np.save(f'{savedir}inverse_newcam_mtx.npy', inverse_newcam_mtx)
 
 print(">==> Calibration Loaded")
 
@@ -108,26 +109,31 @@ ret, rvec1, tvec1=cv2.solvePnP(worldPoints,imagePoints,newcam_mtx,dist)
 
 print("pnp rvec1 - Rotation")
 print(rvec1)
-if writeValues==True: np.save(savedir+'rvec1.npy', rvec1)
+if writeValues:
+    np.save(f'{savedir}rvec1.npy', rvec1)
 
 print("pnp tvec1 - Translation")
 print(tvec1)
-if writeValues==True: np.save(savedir+'tvec1.npy', tvec1)
+if writeValues:
+    np.save(f'{savedir}tvec1.npy', tvec1)
 
 print("R - rodrigues vecs")
 R_mtx, jac=cv2.Rodrigues(rvec1)
 print(R_mtx)
-if writeValues==True: np.save(savedir+'R_mtx.npy', R_mtx)
+if writeValues:
+    np.save(f'{savedir}R_mtx.npy', R_mtx)
 
 print("R|t - Extrinsic Matrix")
 Rt=np.column_stack((R_mtx,tvec1))
 print(Rt)
-if writeValues==True: np.save(savedir+'Rt.npy', Rt)
+if writeValues:
+    np.save(f'{savedir}Rt.npy', Rt)
 
 print("newCamMtx*R|t - Projection Matrix")
 P_mtx=newcam_mtx.dot(Rt)
 print(P_mtx)
-if writeValues==True: np.save(savedir+'P_mtx.npy', P_mtx)
+if writeValues:
+    np.save(f'{savedir}P_mtx.npy', P_mtx)
 
 #[XYZ1]
 
@@ -139,9 +145,9 @@ if writeValues==True: np.save(savedir+'P_mtx.npy', P_mtx)
 s_arr=np.array([0], dtype=np.float32)
 s_describe=np.array([0,0,0,0,0,0,0,0,0,0],dtype=np.float32)
 
-for i in range(0,total_points_used):
-    print("=======POINT # " + str(i) +" =========================")
-    
+for i in range(total_points_used):
+    print(f"=======POINT # {str(i)} =========================")
+
     print("Forward: From World Points, Find Image Pixel")
     XYZ1=np.array([[worldPoints[i,0],worldPoints[i,1],worldPoints[i,2],1]], dtype=np.float32)
     XYZ1=XYZ1.T
@@ -150,7 +156,7 @@ for i in range(0,total_points_used):
     suv1=P_mtx.dot(XYZ1)
     print("//-- suv1")
     print(suv1)
-    s=suv1[2,0]    
+    s=suv1[2,0]
     uv1=suv1/s
     print(">==> uv1 - Image Points")
     print(uv1)
@@ -158,7 +164,8 @@ for i in range(0,total_points_used):
     print(s)
     s_arr=np.array([s/total_points_used+s_arr[0]], dtype=np.float32)
     s_describe[i]=s
-    if writeValues==True: np.save(savedir+'s_arr.npy', s_arr)
+    if writeValues:
+        np.save(f'{savedir}s_arr.npy', s_arr)
 
     print("Solve: From Image Pixels, find World Points")
 
@@ -179,7 +186,7 @@ for i in range(0,total_points_used):
     print("{{-- XYZ")
     print(XYZ)
 
-    if calculatefromCam==True:
+    if calculatefromCam:
         cXYZ=cameraXYZ.calculate_XYZ(imagePoints[i,0],imagePoints[i,1])
         print("camXYZ")
         print(cXYZ)
@@ -188,13 +195,15 @@ for i in range(0,total_points_used):
 s_mean, s_std = np.mean(s_describe), np.std(s_describe)
 
 print(">>>>>>>>>>>>>>>>>>>>> S RESULTS")
-print("Mean: "+ str(s_mean))
+print(f"Mean: {str(s_mean)}")
 #print("Average: " + str(s_arr[0]))
-print("Std: " + str(s_std))
+print(f"Std: {str(s_std)}")
 
 print(">>>>>> S Error by Point")
 
-for i in range(0,total_points_used):
-    print("Point "+str(i))
-    print("S: " +str(s_describe[i])+" Mean: " +str(s_mean) + " Error: " + str(s_describe[i]-s_mean))
+for i in range(total_points_used):
+    print(f"Point {str(i)}")
+    print(
+        f"S: {str(s_describe[i])} Mean: {str(s_mean)} Error: {str(s_describe[i] - s_mean)}"
+    )
 

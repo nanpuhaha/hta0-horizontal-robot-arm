@@ -21,7 +21,7 @@ def RunTests():
 
 def RunPickandPlace():
         #Run Pick and Place
-        
+
         fullscreen=False
         detectXYZ=True
         calculateXYZ=True

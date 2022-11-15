@@ -45,8 +45,9 @@ class arm_controller:
         #X: 7.00 Y: 8.00 Z: 9.00 bool_move: 1.00 bool_open: 0.00 delay_ms: 10.00 move_type: 1.00
 
         #bool_move controls if the arm moves linearly to the position or coordinates y/z to pickup
-        
-        inputs="<"+str(inputarr[0])+","+str(inputarr[1])+","+str(inputarr[2])+","+str(inputarr[3])+","+str(inputarr[4])+","+str(inputarr[5])+">"
+
+        inputs = f"<{str(inputarr[0])},{str(inputarr[1])},{str(inputarr[2])},{str(inputarr[3])},{str(inputarr[4])},{str(inputarr[5])}>"
+
         inputs=inputs.encode("utf-8")
 
         self.ser.write(inputs)

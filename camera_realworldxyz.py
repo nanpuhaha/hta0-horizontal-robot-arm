@@ -27,17 +27,17 @@ class camera_realtimeXYZ:
 
         #self.imageRec=image_recognition_singlecam.image_recognition(True,False,imgdir,imgdir,True,True)
 
-        self.cam_mtx=np.load(savedir+'cam_mtx.npy')
-        self.dist=np.load(savedir+'dist.npy')
-        self.newcam_mtx=np.load(savedir+'newcam_mtx.npy')
-        self.roi=np.load(savedir+'roi.npy')
-        self.rvec1=np.load(savedir+'rvec1.npy')
-        self.tvec1=np.load(savedir+'tvec1.npy')
-        self.R_mtx=np.load(savedir+'R_mtx.npy')
-        self.Rt=np.load(savedir+'Rt.npy')
-        self.P_mtx=np.load(savedir+'P_mtx.npy')
+        self.cam_mtx = np.load(f'{savedir}cam_mtx.npy')
+        self.dist = np.load(f'{savedir}dist.npy')
+        self.newcam_mtx = np.load(f'{savedir}newcam_mtx.npy')
+        self.roi = np.load(f'{savedir}roi.npy')
+        self.rvec1 = np.load(f'{savedir}rvec1.npy')
+        self.tvec1 = np.load(f'{savedir}tvec1.npy')
+        self.R_mtx = np.load(f'{savedir}R_mtx.npy')
+        self.Rt = np.load(f'{savedir}Rt.npy')
+        self.P_mtx = np.load(f'{savedir}P_mtx.npy')
 
-        s_arr=np.load(savedir+'s_arr.npy')
+        s_arr = np.load(f'{savedir}s_arr.npy')
         self.scalingfactor=s_arr[0]
 
         self.inverse_newcam_mtx = np.linalg.inv(self.newcam_mtx)
@@ -53,9 +53,7 @@ class camera_realtimeXYZ:
         cv2.destroyAllWindows()
 
     def undistort_image(self,image):
-        image_undst = cv2.undistort(image, self.cam_mtx, self.dist, None, self.newcam_mtx)
-
-        return image_undst
+        return cv2.undistort(image, self.cam_mtx, self.dist, None, self.newcam_mtx)
 
     def load_background(self,background):
         self.bg_undst=self.undistort_image(background)
@@ -64,14 +62,14 @@ class camera_realtimeXYZ:
     def detect_xyz(self,image,calcXYZ=True,calcarea=False):
 
         image_src=image.copy()
-        
+
         #if calcXYZ==True:
         #    img= self.undistort_image(image_src)
         #    bg = self.bg_undst
         #else:
         img=image_src
         bg=self.bg
-                    
+
         XYZ=[]
         #self.previewImage("capture image",img_undst)
         #self.previewImage("bg image",self.bg_undst)
@@ -79,7 +77,7 @@ class camera_realtimeXYZ:
 
         if (obj_count>0):
 
-            for i in range(0,obj_count):
+            for i in range(obj_count):
                 x=detected_points[i][0]
                 y=detected_points[i][1]
                 w=detected_points[i][2]
@@ -88,17 +86,44 @@ class camera_realtimeXYZ:
                 cy=detected_points[i][5]
 
                 cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-                
+
                 #draw center
                 cv2.circle(img,(cx,cy),3,(0,255,0),2)
 
-                
-                cv2.putText(img,"cx,cy: "+str(self.truncate(cx,2))+","+str(self.truncate(cy,2)),(x,y+h+28),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),2)
+
+                cv2.putText(
+                    img,
+                    f"cx,cy: {str(self.truncate(cx, 2))},{str(self.truncate(cy, 2))}",
+                    (x, y + h + 28),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (0, 255, 0),
+                    2,
+                )
+
                 if calcXYZ==True:
                     XYZ.append(self.calculate_XYZ(cx,cy))
-                    cv2.putText(img,"X,Y: "+str(self.truncate(XYZ[i][0],2))+","+str(self.truncate(XYZ[i][1],2)),(x,y+h+14),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),2)
+                    cv2.putText(
+                        img,
+                        f"X,Y: {str(self.truncate(XYZ[i][0], 2))},{str(self.truncate(XYZ[i][1], 2))}",
+                        (x, y + h + 14),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (0, 255, 0),
+                        2,
+                    )
+
                 if calcarea==True:
-                    cv2.putText(img,"area: "+str(self.truncate(w*h,2)),(x,y-12),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),2)
+                    cv2.putText(
+                        img,
+                        f"area: {str(self.truncate(w * h, 2))}",
+                        (x, y - 12),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (0, 255, 0),
+                        2,
+                    )
+
 
         return img, XYZ
 
@@ -111,9 +136,7 @@ class camera_realtimeXYZ:
         suv_1=self.scalingfactor*uv_1
         xyz_c=self.inverse_newcam_mtx.dot(suv_1)
         xyz_c=xyz_c-self.tvec1
-        XYZ=self.inverse_R_mtx.dot(xyz_c)
-
-        return XYZ
+        return self.inverse_R_mtx.dot(xyz_c)
 
 
     def truncate(self, n, decimals=0):
